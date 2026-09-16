@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Crafted for Harshit Dandelia</title>
+
+<!-- Installable app: black status bar, no browser chrome, safe-area aware. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reading Room">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="/icons/icon-192.png">
+<style>
+  :root{
+    --ink:#fff;
+    --dim:#8f8f8f;
+    --faint:#525252;
+    --rule:#1c1c1c;
+    --rule-soft:#141414;
+    --accent:#fff;          /* recoloured per section at runtime */
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#000; }
+  /* Keep content clear of the notch and home indicator once installed. */
+  .side{ padding-top:calc(34px + env(safe-area-inset-top)); }
+  .main{ padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
+  body{
+    color:var(--ink);
+    font-family:"Times New Roman", Times, serif;
+    font-size:17px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--accent); color:#000; }
+  button{ font-family:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  a{ color:inherit; }
+  :focus-visible{ outline:1px solid var(--accent); outline-offset:3px; border-radius:1px; }
+
+  /* ---------- shell ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns:238px minmax(0,1fr);
+    max-width:1140px;
+    margin:0 auto;
+  }
+
+  /* ---------- sidebar ---------- */
+  .side{
+    position:sticky; top:0;
+    height:100vh; overflow-y:auto;
+    padding:34px 24px 40px 26px;
+    border-right:1px solid var(--rule);
+    scrollbar-width:thin; scrollbar-color:#222 transparent;
+  }
+  .side::-webkit-scrollbar{ width:6px; }
+  .side::-webkit-scrollbar-thumb{ background:#1f1f1f; }
+
+  .signature{ font-size:15px; font-style:italic; color:var(--dim); line-height:1.35; }
+  .stamp{ font-size:12.5px; color:var(--faint); margin-top:4px; }
+
+  .refresh{
+    display:inline-block; margin-top:13px;
+    font-size:14px; color:var(--dim);
+    padding:4px 12px 5px; border:1px solid var(--rule); border-radius:2px;
+  }
+  .refresh:hover:enabled{ color:var(--ink); border-color:var(--accent); }
+  .refresh:disabled{ color:var(--faint); cursor:default; font-style:italic; }
+
+  .navgroup{ margin-top:26px; }
+  .navlabel{
+    font-size:12.5px; font-style:italic; color:var(--faint);
+    padding-left:13px; margin-bottom:9px;
+  }
+  .navlist{ list-style:none; margin:0; padding:0; }
+  .navitem{
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+    width:100%; text-align:left;
+    font-size:16.5px; line-height:1.3;
+    padding:6.5px 4px 6.5px 12px;
+    border-left:2px solid transparent;
+    color:var(--dim);
+  }
+  .navitem:hover{ color:var(--ink); }
+  .navitem[aria-current="true"]{ border-left-color:currentColor; }
+  .navrule{ height:1px; background:var(--rule); margin:20px 0 20px 12px; }
+
+  /* ---------- main column ---------- */
+  .main{ padding:36px 30px 96px 38px; min-width:0; }
+
+  .pagehead{ border-bottom:1px solid var(--rule); padding-bottom:16px; margin-bottom:6px; }
+  h2.section{ font-size:26px; font-weight:400; line-height:1.2; margin:0; letter-spacing:-.15px; }
+  .note{ font-size:13.5px; color:var(--faint); margin:7px 0 0; }
+
+  /* ---------- story list ---------- */
+  ol.feed{ list-style:none; margin:0; padding:0; }
+  .row{
+    display:grid; grid-template-columns:28px minmax(0,1fr);
+    gap:0 14px; align-items:start;
+    padding:16px 0; border-bottom:1px solid var(--rule-soft);
+  }
+  .row:last-child{ border-bottom:1px solid var(--rule); }
+  .rank{ font-size:14.5px; color:var(--faint); padding-top:3px; }
+  .rowmain{ min-width:0; }
+  .title{ font-size:19.5px; line-height:1.34; display:block; text-align:left; width:100%; }
+  .row:hover .title{ text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px; }
+  .meta{ font-size:13.5px; color:var(--dim); margin-top:6px; }
+  .tag{ font-style:italic; }
+  .carried{ color:var(--faint); }
+
+  .row.lead{ padding:8px 0 22px; border-bottom:1px solid var(--rule); }
+  .row.lead .title{ font-size:29px; line-height:1.2; letter-spacing:-.2px; }
+  .row.lead .standfirst{ font-size:16.5px; color:var(--dim); margin-top:9px; max-width:58ch; }
+
+  /* ---------- article ---------- */
+  .back{
+    display:inline-flex; align-items:center; gap:9px;
+    font-size:15.5px; color:var(--dim);
+    margin-bottom:28px; padding:5px 13px 6px 10px;
+    border:1px solid var(--rule); border-radius:2px;
+  }
+  .back .arrow{ font-size:18px; line-height:1; }
+  .back:hover{ color:var(--ink); border-color:var(--accent); }
+  .kicker{ font-size:14px; font-style:italic; margin:0 0 11px; }
+  h1.art{ font-size:35px; line-height:1.16; font-weight:400; margin:0 0 14px; letter-spacing:-.3px; max-width:22ch; }
+  .artmeta{ font-size:13.5px; color:var(--dim); border-bottom:1px solid var(--rule); padding-bottom:18px; }
+  .body{ margin-top:26px; max-width:64ch; }
+  .body p{ margin:0 0 18px; }
+  .body p:first-child{ font-size:18.5px; }
+  .status{ color:var(--dim); font-style:italic; font-size:15px; }
+  .empty{ color:var(--dim); font-style:italic; margin-top:28px; max-width:54ch; }
+
+  .tools{
+    display:flex; gap:22px; align-items:center; flex-wrap:wrap;
+    margin-top:34px; padding-top:17px; border-top:1px solid var(--rule); font-size:15px;
+  }
+  .tools button, .tools a{ color:var(--dim); text-decoration:none; }
+  .tools button:hover, .tools a:hover{ color:var(--ink); }
+  .elsewhere{ margin-top:18px; font-size:14.5px; color:var(--faint); }
+  .elsewhere a{ color:var(--dim); text-decoration:none; margin-left:14px; }
+  .elsewhere a:hover{ color:var(--ink); }
+
+  footer{ margin-top:56px; padding-top:17px; border-top:1px solid var(--rule); font-size:13px; color:var(--faint); }
+  footer button{ color:var(--faint); text-decoration:underline; text-underline-offset:2px; }
+  footer button:hover{ color:var(--ink); }
+
+  /* ---------- narrow screens ---------- */
+  @media (max-width:880px){
+    .shell{ display:block; }
+    .side{
+      position:static; height:auto; overflow:visible;
+      padding:22px 18px 0;
+      border-right:0; border-bottom:1px solid var(--rule);
+    }
+    .navgroup{ margin-top:18px; }
+    .navlabel, .navrule{ display:none; }
+    .navlist{ display:flex; gap:6px; overflow-x:auto; padding-bottom:14px; scrollbar-width:none; }
+    .navlist::-webkit-scrollbar{ display:none; }
+    .navitem{
+      flex:none; padding:5px 11px 6px;
+      border-left:0; border-bottom:2px solid transparent;
+      white-space:nowrap; font-size:15.5px;
+    }
+    .navitem[aria-current="true"]{ border-left-color:transparent; border-bottom-color:currentColor; }
+    .main{ padding:24px 18px 76px; }
+    h2.section{ font-size:22px; }
+    h1.art{ font-size:27px; max-width:none; }
+    .row.lead .title{ font-size:24px; }
+    .row{ grid-template-columns:22px minmax(0,1fr); gap:0 11px; }
+    body{ font-size:16.5px; }
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="side" id="side" aria-label="Sections"></nav>
+  <main class="main" id="main"></main>
+</div>
+
+<script type="module">
+const api = (p, o) => fetch(p, o).then(r => r.json());
+const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+
+let TOPICS = [], T = {}, lastBuilt = 0;
+let view = { name: 'home' }, trail = [];
+const listCache = {}, articleCache = {};
+// Nothing refreshes on a clock. This stamp is the only thing that decides when
+// the news changes, and it changes only when Refresh is pressed. Keeping it in
+// localStorage means a refresh sticks across visits and across reopening the
+// installed app, instead of quietly reverting to an older cached copy.
+const VKEY = 'reading-room-version';
+let version = '0';
+let refreshing = false;
+
+try { version = localStorage.getItem(VKEY) || String(Date.now()); } catch { version = String(Date.now()); }
+try { localStorage.setItem(VKEY, version); } catch {}
+
+function bumpVersion() {
+  version = String(Date.now());
+  try { localStorage.setItem(VKEY, version); } catch {}
+}
+
+// `stamp:false` for article text, which never changes once published and so
+// shouldn't be re-fetched just because the headlines were refreshed.
+function apiUrl(pathname, params = {}, { stamp = true } = {}) {
+  const u = new URL(pathname, location.origin);
+  for (const [k, v] of Object.entries(params)) if (v != null) u.searchParams.set(k, v);
+  if (stamp) u.searchParams.set('v', version);
+  return u.pathname + u.search;
+}
+
+const go = v => { trail.push(view); view = v; window.scrollTo(0, 0); render(); };
+const back = () => { view = trail.pop() || { name: 'home' }; window.scrollTo(0, 0); render(); };
+const jump = v => { trail = []; view = v; window.scrollTo(0, 0); render(); };
+
+// the current section's colour drives focus rings and text selection
+const accent = c => document.documentElement.style.setProperty('--accent', c || '#fff');
+
+function when(iso) {
+  const d = new Date(iso), h = (Date.now() - d) / 3.6e6;
+  if (h < 1) return 'just now';
+  if (h < 24) return Math.round(h) + 'h ago';
+  if (h < 48) return 'yesterday';
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate() + ' ' + m[d.getMonth()];
+}
+// Date plus time, so it's obvious how old the current pull is.
+function stampTime(ms) {
+  const d = new Date(ms);
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${d.getDate()} ${m[d.getMonth()]}, ${hh}:${mm}`;
+}
+
+async function doRefresh() {
+  if (refreshing) return;
+  refreshing = true;
+  bumpVersion();
+  for (const k of Object.keys(listCache)) delete listCache[k];
+  sidebar();                       // show the pulling state straight away
+  try { await render(); } finally { refreshing = false; sidebar(); }
+}
+
+function longDate(ms) {
+  const d = new Date(ms || Date.now());
+  const m = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/* ---------------- sidebar ---------------- */
+
+function navButton(label, { current, colour, onClick }) {
+  const b = el('button', 'navitem');
+  b.append(el('span', null, label));
+  b.setAttribute('aria-current', current ? 'true' : 'false');
+  if (current) b.style.color = colour || '#fff';
+  else {
+    b.onmouseenter = () => { if (colour) b.style.color = colour; };
+    b.onmouseleave = () => { b.style.color = ''; };
+  }
+  b.onclick = onClick;
+  return b;
+}
+
+function sidebar() {
+  const side = document.getElementById('side');
+  side.innerHTML = '';
+  side.append(el('div', 'signature', 'Crafted for Harshit Dandelia'));
+  side.append(el('div', 'stamp', lastBuilt ? 'Pulled ' + stampTime(lastBuilt) : 'Not pulled yet'));
+
+  const rb = el('button', 'refresh', refreshing ? 'Pulling the feeds\u2026' : 'Refresh');
+  rb.disabled = refreshing;
+  rb.onclick = doRefresh;
+  side.append(rb);
+
+  const g1 = el('div', 'navgroup');
+  const l1 = el('ul', 'navlist');
+  const li = document.createElement('li');
+  li.append(navButton('Front page', {
+    current: view.name === 'home',
+    colour: '#fff',
+    onClick: () => jump({ name: 'home' }),
+  }));
+  l1.append(li);
+  g1.append(l1);
+  side.append(g1, el('div', 'navrule'));
+
+  const g2 = el('div', 'navgroup');
+  g2.style.marginTop = '0';
+  g2.append(el('div', 'navlabel', 'Subjects'));
+  const l2 = el('ul', 'navlist');
+  for (const t of TOPICS) {
+    const current =
+      (view.name === 'topic' && view.key === t.key) ||
+      (view.name === 'article' && view.story?.topic === t.key);
+    const item = document.createElement('li');
+    item.append(navButton(t.name, { current, colour: t.colour, onClick: () => jump({ name: 'topic', key: t.key }) }));
+    l2.append(item);
+  }
+  g2.append(l2);
+  side.append(g2);
+}
+
+/* ---------------- story rows ---------------- */
+
+function row(s, n, { showTopic = false, lead = false } = {}) {
+  const t = T[s.topic] || { name: '', colour: '#fff' };
+  const li = el('li', lead ? 'row lead' : 'row');
+  li.append(el('div', 'rank', lead ? '' : String(n)));
+
+  const main = el('div', 'rowmain');
+  const btn = el('button', 'title', s.title);
+  btn.onclick = () => go({ name: 'article', id: s.id, story: s });
+  main.append(btn);
+
+  if (lead && s.summary) main.append(el('p', 'standfirst', s.summary.slice(0, 190)));
+
+  const meta = el('div', 'meta');
+  if (showTopic) {
+    const tag = el('span', 'tag', t.name);
+    tag.style.color = t.colour;
+    meta.append(tag, document.createTextNode('   '));
+  }
+  meta.append(document.createTextNode(`${s.source}, ${when(s.published)}`));
+  if (s.outlets?.length > 1) {
+    const others = s.outlets.length - 1;
+    meta.append(el('span', 'carried', `, carried by ${others} other${others > 1 ? 's' : ''}`));
+  }
+  main.append(meta);
+  li.append(main);
+  return li;
+}
+
+function renderList(host, stories, { showTopic = false, withLead = false } = {}) {
+  if (!stories.length) {
+    host.append(el('p', 'empty', 'Nothing came back. Either these feeds are unreachable right now or nothing has been published in the last few days. Try Refresh in the sidebar.'));
+    return;
+  }
+  const ol = el('ol', 'feed');
+  stories.forEach((s, i) => ol.append(row(s, i + 1, { showTopic, lead: withLead && i === 0 })));
+  host.append(ol);
+}
+
+function pageHead(main, title, note, colour) {
+  const head = el('div', 'pagehead');
+  const h = el('h2', 'section', title);
+  if (colour) h.style.color = colour;
+  head.append(h);
+  if (note) head.append(el('p', 'note', note));
+  main.append(head);
+}
+
+function backButton(label) {
+  const b = el('button', 'back');
+  b.append(el('span', 'arrow', '\u2190'), el('span', null, label));
+  b.setAttribute('aria-label', label);
+  b.onclick = back;
+  return b;
+}
+
+/* ---------------- views ---------------- */
+
+async function viewHome(main) {
+  accent('#fff');
+  pageHead(main, 'Most talked about across your interests',
+    'Ranked by how many outlets are running each story and how fresh it is.');
+  const host = el('div');
+  main.append(host);
+
+  if (listCache.front) return renderList(host, listCache.front, { showTopic: true, withLead: true });
+  host.append(el('p', 'status', 'Pulling the feeds\u2026'));
+  const r = await api(apiUrl('/api/front'));
+  listCache.front = r.stories;
+  lastBuilt = r.builtAt;
+  if (view.name === 'home') {
+    host.innerHTML = '';
+    renderList(host, r.stories, { showTopic: true, withLead: true });
+    sidebar();
+  }
+}
+
+async function viewTopic(main) {
+  const t = T[view.key];
+  accent(t.colour);
+  pageHead(main, t.name, 'The ten most discussed stories, busiest first.', t.colour);
+  const host = el('div');
+  main.append(host);
+
+  if (listCache[t.key]) return renderList(host, listCache[t.key], { withLead: true });
+  host.append(el('p', 'status', 'Pulling the feeds\u2026'));
+  const r = await api(apiUrl('/api/topic/' + t.key));
+  listCache[t.key] = r.stories;
+  if (r.builtAt) lastBuilt = r.builtAt;
+  if (view.name === 'topic' && view.key === t.key) {
+    host.innerHTML = '';
+    renderList(host, r.stories, { withLead: true });
+    sidebar();                     // refresh the "Pulled …" stamp
+  }
+}
+
+async function viewArticle(main) {
+  const s = view.story;
+  const t = T[s.topic] || { name: '', colour: '#fff' };
+  accent(t.colour);
+
+  const cameFrom = trail[trail.length - 1];
+  const label = cameFrom?.name === 'topic' ? 'Back to ' + (T[cameFrom.key]?.name || 'list') : 'Back to the list';
+  main.append(backButton(label));
+
+  const k = el('p', 'kicker', t.name);
+  k.style.color = t.colour;
+  main.append(k, el('h1', 'art', s.title));
+  main.append(el('div', 'artmeta', `${s.source}, ${when(s.published)}`));
+
+  const body = el('div', 'body');
+  body.append(el('p', 'status', 'Fetching the article\u2026'));
+  main.append(body);
+
+  const tools = el('div', 'tools');
+  tools.append(Object.assign(document.createElement('a'),
+    { href: s.link, target: '_blank', rel: 'noopener noreferrer', textContent: 'Open at ' + s.source }));
+  main.append(tools);
+
+  if (s.alsoAt?.length) {
+    const also = el('div', 'elsewhere');
+    also.append(document.createTextNode('Also covered by'));
+    for (const o of s.alsoAt) {
+      also.append(Object.assign(document.createElement('a'),
+        { href: o.link, target: '_blank', rel: 'noopener noreferrer', textContent: o.source }));
+    }
+    main.append(also);
+  }
+
+  // The link travels with the request so an open article survives a refresh
+  // that rotates the story out of the current window.
+  const url = apiUrl('/api/article/' + s.id, { link: s.link || '' }, { stamp: false });
+  const data = articleCache[s.id] || (articleCache[s.id] = await api(url));
+  if (view.name !== 'article' || view.id !== s.id) return;
+
+  body.innerHTML = '';
+  if (data.ok && data.paragraphs.length) {
+    if (data.byline) {
+      const by = el('p', 'status', data.byline);
+      by.style.marginBottom = '22px';
+      body.append(by);
+    }
+    for (const p of data.paragraphs) body.append(el('p', null, p));
+  } else {
+    if (s.summary) body.append(el('p', null, s.summary));
+    body.append(el('p', 'status', "This publisher doesn't hand its text to a script. Open it at the source instead."));
+  }
+}
+
+/* ---------------- shell ---------------- */
+
+async function render() {
+  sidebar();
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  if (view.name === 'home') await viewHome(main);
+  else if (view.name === 'topic') await viewTopic(main);
+  else if (view.name === 'article') await viewArticle(main);
+
+  main.append(el('footer', null, 'Headlines change only when you press Refresh.'));
+}
+
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && trail.length) back(); });
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+(async function start() {
+  const t = await api(apiUrl('/api/topics'));
+  TOPICS = t.topics;
+  T = Object.fromEntries(TOPICS.map(x => [x.key, x]));
+  lastBuilt = t.builtAt;
+  render();
+})();
+</script>
+</body>
+</html>

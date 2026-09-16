@@ -1,0 +1,23 @@
+# Fly.io configuration for the reading room.
+# `fly launch` will generate most of this. Nothing is written to disk, so no
+# volume is needed — the app holds its stories in memory and re-pulls the feeds.
+
+app = "reading-room"          # fly launch will ask you to confirm or change this
+primary_region = "bom"        # bom = Mumbai. Pick whatever's closest to you.
+
+[build]
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false   # keep it running instead of sleeping between visits
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
