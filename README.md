@@ -54,6 +54,10 @@ The container image installs Firefox for Playwright automatically. For local
 use, run `npx playwright install firefox` once after `npm install`; deployments
 that cannot ship a browser continue using the HTTP tier.
 
+On Vercel, the article reader uses a bundled serverless Chromium runtime, so
+you do not need to install a browser manually. Redeploy after pulling changes
+that update the article fallback dependencies.
+
 The sidebar's **Search the web** field uses Google's Programmable Search JSON
 API. Set `GOOGLE_API_KEY` and `GOOGLE_CSE_ID` in the environment before
 starting the app. Search results can be opened in the same in-app reader, or
