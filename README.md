@@ -58,14 +58,10 @@ On Vercel, the article reader uses a bundled serverless Chromium runtime, so
 you do not need to install a browser manually. Redeploy after pulling changes
 that update the article fallback dependencies.
 
-The sidebar's **Search the web** field uses Google's Programmable Search JSON
-API. Set `GOOGLE_API_KEY` and `GOOGLE_CSE_ID` in the environment before
-starting the app. Search results can be opened in the same in-app reader, or
-opened directly at the source when a publisher blocks automated reading.
-
-Create a Programmable Search Engine at `programmablesearchengine.google.com`,
-enable the Custom Search JSON API in Google Cloud, and use its API key plus
-the engine's ID as those two environment variables.
+The sidebar's **Search the web** field uses DuckDuckGo's lightweight results
+page and requires no API key. Search results can be opened in the same in-app
+reader, or opened directly at the source when a publisher blocks automated
+reading.
 
 ## Changing the subjects and sources
 
