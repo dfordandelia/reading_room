@@ -69,15 +69,6 @@
   }
   .refresh:hover:enabled{ color:var(--ink); border-color:var(--accent); }
   .refresh:disabled{ color:var(--faint); cursor:default; font-style:italic; }
-  .searchform{ display:flex; gap:6px; margin-top:20px; }
-  .searchform input{
-    min-width:0; flex:1; color:var(--ink); background:#000;
-    border:1px solid var(--rule); border-radius:2px; padding:7px 8px;
-    font:15px inherit;
-  }
-  .searchform button{ color:var(--dim); border:1px solid var(--rule); padding:0 9px; }
-  .searchform button:hover{ color:var(--ink); border-color:var(--accent); }
-
   .navgroup{ margin-top:26px; }
   .navlabel{
     font-size:12.5px; font-style:italic; color:var(--faint);
@@ -293,22 +284,6 @@ function sidebar() {
   rb.onclick = doRefresh;
   side.append(rb);
 
-  const searchForm = document.createElement('form');
-  searchForm.className = 'searchform';
-  const searchInput = document.createElement('input');
-  searchInput.type = 'search';
-  searchInput.placeholder = 'Search the web';
-  searchInput.setAttribute('aria-label', 'Search the web');
-  const searchSubmit = el('button', null, 'Search');
-  searchSubmit.type = 'submit';
-  searchForm.append(searchInput, searchSubmit);
-  searchForm.onsubmit = (event) => {
-    event.preventDefault();
-    const query = searchInput.value.trim();
-    if (query) jump({ name: 'search', query });
-  };
-  side.append(searchForm);
-
   const g1 = el('div', 'navgroup');
   const l1 = el('ul', 'navlist');
   const li = document.createElement('li');
@@ -434,22 +409,6 @@ async function viewTopic(main) {
   }
 }
 
-async function viewSearch(main) {
-  accent('#fff');
-  pageHead(main, `Search results for “${view.query}”`, 'Web results from DuckDuckGo.', '#fff');
-  const host = el('div');
-  main.append(host);
-  host.append(el('p', 'status', 'Searching the web…'));
-  const r = await api(apiUrl('/api/search', { q: view.query }, { stamp: false }));
-  if (view.name !== 'search' || view.query !== r.query) return;
-  host.innerHTML = '';
-  if (r.error) {
-    host.append(el('p', 'empty', r.error));
-    return;
-  }
-  renderList(host, r.stories, { withLead: true });
-}
-
 async function viewArticle(main) {
   const s = view.story;
   const t = T[s.topic] || { name: '', colour: '#fff' };
@@ -512,7 +471,6 @@ async function render() {
 
   if (view.name === 'home') await viewHome(main);
   else if (view.name === 'topic') await viewTopic(main);
-  else if (view.name === 'search') await viewSearch(main);
   else if (view.name === 'article') await viewArticle(main);
 
   main.append(el('footer', null, 'Headlines change only when you press Refresh.'));

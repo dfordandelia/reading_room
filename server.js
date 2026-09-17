@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { TOPICS, TOPIC_BY_KEY } from './lib/topics.js';
 import { refresh, ensureTopic, ensureAll, topicStories, story, frontPage, builtAt } from './lib/news.js';
 import { extract } from './lib/article.js';
-import { searchWeb } from './lib/search.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -96,17 +95,6 @@ app.get('/api/topic/:key', wrap(async (req, res) => {
   cacheFor(req, res);
   res.json({ stories: topicStories(key), builtAt: builtAt() });
 }));
-
-app.get('/api/search', async (req, res) => {
-  const query = typeof req.query.q === 'string' ? req.query.q : '';
-  try {
-    const results = await searchWeb(query);
-    res.set('Cache-Control', 'private, max-age=300');
-    res.json({ query: query.trim().slice(0, 160), stories: results });
-  } catch (err) {
-    res.status(503).json({ query: query.trim().slice(0, 160), error: err.message });
-  }
-});
 
 // Full text, pulled live and cached in memory by lib/article.js.
 //

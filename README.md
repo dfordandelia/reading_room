@@ -58,11 +58,6 @@ On Vercel, the article reader uses a bundled serverless Chromium runtime, so
 you do not need to install a browser manually. Redeploy after pulling changes
 that update the article fallback dependencies.
 
-The sidebar's **Search the web** field uses DuckDuckGo's lightweight results
-page and requires no API key. Search results can be opened in the same in-app
-reader, or opened directly at the source when a publisher blocks automated
-reading.
-
 ## Changing the subjects and sources
 
 Everything lives in `lib/topics.js`. Each subject is a key, a display name, a hex
@@ -140,7 +135,6 @@ page as well as the API.
 | GET | `/api/topics` | subject list with colours |
 | GET | `/api/front?limit=14` | top stories across subjects |
 | GET | `/api/topic/:key` | that subject's top ten |
-| GET | `/api/search?q=...` | web search results |
 | GET | `/api/article/:id` | extracted article text |
 
 All list endpoints accept `?v=` — any value the server hasn't seen forces a
