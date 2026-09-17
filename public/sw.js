@@ -3,8 +3,8 @@
 // network first, falling back to the last copy seen rather than showing
 // nothing — stale headlines beat a blank screen on the train.
 
-const SHELL = 'shell-v1';
-const DATA = 'data-v1';
+const SHELL = 'shell-v7';
+const DATA = 'data-v7';
 const SHELL_FILES = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

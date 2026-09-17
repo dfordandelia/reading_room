@@ -38,14 +38,30 @@ subject's top ten, busiest first.
 
 ## Reading
 
-Tapping a headline fetches the page and runs it through Readability, the same
-extractor behind Firefox Reader View, and shows the text in place. A back arrow
+Tapping a headline fetches the page with a browser-like User-Agent and runs it
+through Readability, the same extractor behind Firefox Reader View. If the
+normal HTTP request fails or returns no article text, an optional Playwright
+Firefox browser renders the page before Readability tries again. A back arrow
 at the top of the article returns you to the list you came from; Escape does the
 same.
 
-Publishers that block scripted requests or sit behind a paywall will fail; you
-get the feed summary and a link to the source instead. That's a limit of their
-setup, not something worth working around.
+Publishers that block both requests or sit behind a paywall will still fail;
+you get the feed summary and a link to the source instead. This app does not
+attempt to bypass anti-bot challenges, retain challenge cookies, or circumvent
+paywalls. The browser tier is disabled with `PLAYWRIGHT_ENABLED=0`.
+
+The container image installs Firefox for Playwright automatically. For local
+use, run `npx playwright install firefox` once after `npm install`; deployments
+that cannot ship a browser continue using the HTTP tier.
+
+The sidebar's **Search the web** field uses Google's Programmable Search JSON
+API. Set `GOOGLE_API_KEY` and `GOOGLE_CSE_ID` in the environment before
+starting the app. Search results can be opened in the same in-app reader, or
+opened directly at the source when a publisher blocks automated reading.
+
+Create a Programmable Search Engine at `programmablesearchengine.google.com`,
+enable the Custom Search JSON API in Google Cloud, and use its API key plus
+the engine's ID as those two environment variables.
 
 ## Changing the subjects and sources
 
@@ -124,6 +140,7 @@ page as well as the API.
 | GET | `/api/topics` | subject list with colours |
 | GET | `/api/front?limit=14` | top stories across subjects |
 | GET | `/api/topic/:key` | that subject's top ten |
+| GET | `/api/search?q=...` | web search results |
 | GET | `/api/article/:id` | extracted article text |
 
 All list endpoints accept `?v=` — any value the server hasn't seen forces a
